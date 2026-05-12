@@ -73,10 +73,13 @@ st.markdown("""
 @st.cache_data
 def cargar_datos(archivo):
     df = pd.read_csv(archivo, sep=';', encoding='utf-8')
+    # Convertir a datetime
     df['Fecha/Hora'] = pd.to_datetime(df['Fecha/Hora'], dayfirst=True, errors='coerce')
+    # Eliminar filas inválida
     df = df.dropna(subset=['Fecha/Hora'])
     df['Equipo'] = df['Equipo'].astype(str)
-    df['Hora'] = df['Fecha/Hora'].dt.floor('H')
+    # Crear columna de hora
+    df['Hora'] = df['Fecha/Hora'].dt.floor('h')
     df = df.sort_values(['Equipo','Fecha/Hora'])
     df['tiempo_seg'] = df.groupby('Equipo')['Fecha/Hora'].diff().shift(-1).dt.total_seconds().fillna(0)
     df.loc[df['Grupo Operacion'] == 'AUXILIAR', 'Grupo Operacion'] = 'PRODUCTIVO'
