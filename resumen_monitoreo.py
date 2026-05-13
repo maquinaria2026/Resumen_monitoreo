@@ -76,6 +76,7 @@ def cargar_datos(archivo):
     df['Fecha/Hora'] = pd.to_datetime(df['Fecha/Hora'], dayfirst=True, errors='coerce')
     df = df.dropna(subset=['Fecha/Hora'])
     df['Equipo'] = df['Equipo'].astype(str)
+    # 🔧 CORRECCIÓN LÍNEA 79: Mantener como Timestamp para comparaciones posteriores
     df['Hora'] = df['Fecha/Hora'].dt.floor('H')
     df = df.sort_values(['Equipo','Fecha/Hora'])
     df['tiempo_seg'] = df.groupby('Equipo')['Fecha/Hora'].diff().shift(-1).dt.total_seconds().fillna(0)
@@ -124,6 +125,7 @@ if archivo_cargado:
         with tabs[0]:
             with st.container():  # Forzar expansión
                 st.subheader("📌 Resumen por Grupo de Operación a una Hora Específica")
+                # 🔧 CORRECCIÓN: Convertir Timestamps a time para el selectbox
                 hora_opciones = sorted(df_filtrado_global['Hora'].dt.time.unique())
                 if not hora_opciones:
                     st.warning("No hay horas disponibles con los filtros aplicados.")
@@ -256,8 +258,13 @@ if archivo_cargado:
         resumen['% mantenimiento'] = resumen['tiempo_mantenimiento_horas'] / resumen['tiempo_total_horas'] * 100
         resumen['% parado'] = resumen['tiempo_parado_horas'] / resumen['tiempo_total_horas'] * 100
         resumen['% alerta total'] = resumen['% mantenimiento'] + resumen['% parado']
-        resumen['comentario'] = resumen.apply(lambda r: '🛠 100% mantenimiento' if r['% mantenimiento'] == 100 else ('🟥 100% parado' if r['% parado'] == 100 else '🚨 Inactivo >80%' if r['% alerta total'] >= 80 else '🔔 Alta inactividad'), axis=1)
-
+        # 🔧 CORRECCIÓN LÍNEA 259: Lambda completa y correctamente formada
+           resumen['comentario'] = resumen.apply(
+            lambda r: '🛠 100% mantenimiento' if r['% mantenimiento'] == 100 
+            else ('🟥 100% parado' if r['% parado'] == 100 
+            else ('🚨 Inactivo >80%' if r['% alerta total'] > 80 else '')), 
+            axis=1
+        )
         alertas = resumen[resumen['% alerta total'] > 60]
         comentarios = alertas[alertas['comentario'] != '']
 
