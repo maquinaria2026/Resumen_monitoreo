@@ -76,7 +76,7 @@ def cargar_datos(archivo):
     df['Fecha/Hora'] = pd.to_datetime(df['Fecha/Hora'], dayfirst=True, errors='coerce')
     df = df.dropna(subset=['Fecha/Hora'])
     df['Equipo'] = df['Equipo'].astype(str)
-    df['Hora'] = df['Fecha/Hora'].dt.floor('H')
+    df['Hora'] = df['Fecha/Hora'].dt.floor('h')  # ✅ CORREGIDO: 'H' → 'h'
     df = df.sort_values(['Equipo','Fecha/Hora'])
     df['tiempo_seg'] = df.groupby('Equipo')['Fecha/Hora'].diff().shift(-1).dt.total_seconds().fillna(0)
     df.loc[df['Grupo Operacion'] == 'AUXILIAR', 'Grupo Operacion'] = 'PRODUCTIVO'
@@ -256,7 +256,7 @@ if archivo_cargado:
         resumen['% mantenimiento'] = resumen['tiempo_mantenimiento_horas'] / resumen['tiempo_total_horas'] * 100
         resumen['% parado'] = resumen['tiempo_parado_horas'] / resumen['tiempo_total_horas'] * 100
         resumen['% alerta total'] = resumen['% mantenimiento'] + resumen['% parado']
-        resumen['comentario'] = resumen.apply(lambda r: '🛠 100% mantenimiento' if r['% mantenimiento'] == 100 else ('🟥 100% parado' if r['% parado'] == 100 else '🚨 Inactivo >80%' if r['% alerta total'] >= 80 else '🔔 Alta inactividad'), axis=1)
+        resumen['comentario'] = resumen.apply(lambda r: '🛠 100% mantenimiento' if r['% mantenimiento'] == 100 else ('🟥 100% parado' if r['% parado'] == 100 else '🚨 Inactivo >80%' if r['% alerta total'] > 80 else ''), axis=1)
 
         alertas = resumen[resumen['% alerta total'] > 60]
         comentarios = alertas[alertas['comentario'] != '']
@@ -522,20 +522,3 @@ if archivo_cargado:
 else:
     st.info("⬅️ Por favor, cargue un archivo para comenzar.")
 #python -m streamlit run c:/Users/sacor/Downloads/resumen_monitoreo3.py
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
